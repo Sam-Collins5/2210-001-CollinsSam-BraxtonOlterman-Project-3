@@ -12,7 +12,7 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
     class Dock
     {
         public string Id { get; set; }
-        public Queue<Truck> Lines { get; set; }
+        public Queue<Truck> Line { get; set; }
         public double TotalSales { get; set; }
         public int TotalCrates { get; set; }
         public int TotalTrucks { get; set; }
@@ -24,7 +24,7 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             if (string.IsNullOrEmpty(id))
                 throw new InvalidDataException();
             Id = id;
-            Lines = new Queue<Truck>();
+            Line = new Queue<Truck>();
             TotalSales = 0.0;
             TotalCrates = 0;
             TotalTrucks = 0;
@@ -32,14 +32,14 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             TimeNotInUse = 0;
         }
 
-        void JoinLine(Truck truck)
+        public void JoinLine(Truck truck)
         {
-            Lines.Enqueue(truck);
+            Line.Enqueue(truck);
         }
 
-        Truck SendOff()
+        public Truck SendOff()
         {
-            return Lines.Dequeue();
+            return Line.Dequeue();
         }
     }
 }
