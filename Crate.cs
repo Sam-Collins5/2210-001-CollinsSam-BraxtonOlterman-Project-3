@@ -19,5 +19,9 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             Price = Math.Round(randy.NextDouble() * (500 - 50) + 50, 2);
         }
 
+        public override string ToString()
+        {
+            return $"{ID},{Price}";
+        }
     }
 }
