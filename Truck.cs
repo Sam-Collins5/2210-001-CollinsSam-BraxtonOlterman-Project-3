@@ -24,14 +24,27 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             Trailer = new Stack<Crate>();
         }
 
-        void Load(Crate crate)
+        public void Load(Crate crate)
         {
             Trailer.Push(crate);
         }
 
-        Crate Unload()
+        public Crate Unload()
         {
             return Trailer.Pop();
+        }
+
+        public override string ToString()
+        {
+            string result = $"Driver:  {driver}\n";
+            result += $"Company: {deliveryCompany}\n";
+            result += $"Crates:\n";
+            var crates = Trailer.ToArray();
+            for (int i = 0; i < Trailer.Count; i++)
+            {
+                result += $"  {i}: {crates[i].ID} ${crates[i].Price}";
+            }
+            return result;
         }
     }
 }
