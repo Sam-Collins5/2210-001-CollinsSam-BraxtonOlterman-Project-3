@@ -14,8 +14,8 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
 
         public Truck() 
         {
-            string[] drivers = {"Larry", "Terry", "Jerry", "Barry", "Harry", "Carey"};
-            string[] deliveryCompanies = { "Walmart", "UPS", "Navigator Express", "DHL Group", "FedEx", "SF Express" };
+            string[] drivers = { "James", "John", "Robert", "Michael", "William", "David", "Richard", "Joseph", "Charles", "Thomas", "Daniel", "Matthew", "Donald", "Anthony", "Paul", "Mark", "George", "Steven", "Kenneth", "Andrew", "Edward", "Brian", "Ronald", "Timothy", "Jason", "Kevin", "Jeffrey", "Gary", "Scott", "Frank", "Eric", "Stephen", "William", "Patrick", "Gregory", "Douglas", "Brian", "Dennis", "Peter", "Larry", "Ryan", "Edward", "Jonathan", "Adam", "Russell", "Jerry", "Harry", "Tyler" };
+            string[] deliveryCompanies = { "Swift Shipping", "ExpressEagle", "SpeedyFleet", "PrimeParcel", "GlobalMovers", "QuickDispatch", "RapidRoadways", "StarLogistics", "ShipNow", "FastForward", "SwiftCargo", "AceDeliveries", "SpeedyHaul", "PrestigeShip", "TransSwift", "DeliverPro", "GlobalMovers", "QuickCrate", "AirSwift", "SwiftPulse", "PlanetExpress", "ExpressXpress", "FastFreight", "RainbowCourier", "BlueSkyLogistics", "GoldenGateDelivery", "EcoMovers", "SkywardCargo", "PrimeLogistics", "TransitMasters", "FastTracks", "SwiftSprint", "RocketLogistics", "ZipZapDelivery", "RoadRunnerExpress", "EagleEyeShip", "DynamicDispatch", "DeliveryDynamo", "SwiftWheels", "GreenCargo", "MoonbeamMovers", "FleetMaster", "SwiftWings", "SunriseDeliveries", "CruiseCargo", "WaveRunnerLogistics", "OrangeBoxCourier", "DirectSwift", "SwiftSailor", "VelocityVan", "AceExpress" };
             
             Random randy = new Random();
             driver = drivers[randy.Next(drivers.Length)];
