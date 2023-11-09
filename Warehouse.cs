@@ -28,6 +28,8 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
 
         public void Run()
         {
+            // Note: After the 48 time increments, the trucks will stop arriving
+
             // TODO : Make this better
             Console.Write("Enter number of docks (1-15):\n>");
             string numberOfDocksStr = Console.ReadLine();
@@ -43,8 +45,26 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             // Warehouse time increment based simulation
             for (int i = 0; i < TIME_INCREMENTS; i++)
             {
+                // Assign truck at front of entrance line to a dock
+                Dock dockToUse = new Dock("empty");
+                int shortestLine = 1;
+
+                for (int d = 0; d < Docks.Count(); d++)
+                {
+                    if (Docks[d].Line.Count() < shortestLine)
+                    {
+                        shortestLine = Docks[d].Line.Count();
+                        dockToUse = Docks[d];
+                    }
+                }
+
+                if (Entrance.Count() > 0)
+                {
+                    dockToUse.Line.Enqueue(Entrance.Dequeue());
+                }
+
                 // A truck arrives
-                Truck truck = new Truck();
+                Truck newTruck = new Truck();
 
                 // Give this new truck a random number of random crates
                 Random randy = new Random();
@@ -52,12 +72,35 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
 
                 for (int c = 0; c < numCrates; c++)
                 {
-                    truck.Load(new Crate(CurrentCrateID.ToString()));
+                    newTruck.Load(new Crate(CurrentCrateID.ToString()));
                     CurrentCrateID++;
                 }
 
-                Console.WriteLine($"{truck.driver}, {truck.deliveryCompany}");
+                Console.WriteLine("New Truck:\n" + newTruck.ToString());
                 Console.ReadLine();
+
+                // Put the new truck at the back of the entrance line
+                Entrance.Enqueue(newTruck);
+
+                // Unload the crates
+                for (int c = 0; c < numberOfDocks; c++)
+                {
+                    if (Docks[c].Line.Count() > 0)
+                    {
+                        Truck truck = Docks[c].Line.Peek();
+                        if (truck.Trailer.Count() > 0)
+                        {
+                            Crate crate = truck.Unload();
+
+                            Console.WriteLine($"{crate.ID}, ${crate.Price}");
+                            Console.ReadLine();
+                        }
+                        else
+                        {
+                            Docks[c].Line.Dequeue();
+                        }
+                    }
+                }
             }
         }
     }
