@@ -143,11 +143,24 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
                 dockToUse.TotalTrucks++;
             }
 
-            // A truck arrives
             Truck newTruck = new Truck();
+            // A truck arrives
+            Random randy = new Random();
+            float chance = 0;
+            bool truckHasArrived = false;
+            double diceRoll = randy.NextDouble() * 2.0f;
+            if (CurrentTime < 24)
+            {
+                chance = CurrentTime / 24;
+                if (chance >= diceRoll) truckHasArrived = true;
+            }
+            else if (CurrentTime >= 24)
+            {
+                chance = (48 - CurrentTime) / 24;
+                if (chance >= diceRoll) truckHasArrived = true;
+            }
 
             // Give this new truck a random number of random crates
-            Random randy = new Random();
             int numCrates = randy.Next(1, 11);
 
             for (int c = 0; c < numCrates; c++)
