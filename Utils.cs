@@ -1,4 +1,12 @@
-﻿
+﻿/**       
+ *--------------------------------------------------------------------
+ *          Author:         Sam Collins (collinss5@etsu.edu)				
+ *          Course-Section: CSCI-2210-001
+ *          Assignment:     Project 3
+ *          Description:    A class for general utilities.	
+ * -------------------------------------------------------------------
+ */
+
 namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
 {
     class Utils
