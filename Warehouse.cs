@@ -15,7 +15,13 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
 {
     class Warehouse
     {
+        /// <summary>
+        /// The docks attached to the warehouse.
+        /// </summary>
         private List<Dock> Docks;
+        /// <summary>
+        /// The line of trucks at the entrance to the warehouse.
+        /// </summary>
         private Queue<Truck> Entrance;
 
         private const int MAX_DOCKS = 15;
@@ -23,11 +29,26 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
         private int CurrentDockID = 0;
         private int CurrentCrateID = 0;
 
+        /// <summary>
+        /// The maximum number of trucks that can arrive at once.
+        /// </summary>
         private int MaxNewTrucks = 3;
+        /// <summary>
+        /// The number of trucks that can be processed at the entrance at once.
+        /// </summary>
         private int NumOfTrucksToProcess = 2;
 
+        /// <summary>
+        /// The minimum number of time increments that the simulation can run for.
+        /// </summary>
         private const int TIME_INCREMENTS = 48;
+        /// <summary>
+        /// The current simulation time.
+        /// </summary>
         private int CurrentTime = 0;
+        /// <summary>
+        /// The interval at which the simulation is updated in milliseconds.
+        /// </summary>
         private int TickIntervalMS = 0;
 
         private StringBuilder SimulationDataSB;
@@ -38,6 +59,9 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
         private int[] TimesThatDocksInUse;
         private int[] TimesThatDocksNotInUse;
 
+        /// <summary>
+        /// Constructs a new warehouse.
+        /// </summary>
         public Warehouse()
         {
             Docks = new List<Dock>();
@@ -49,6 +73,9 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             TruckPrices = new List<double>();
         }
 
+        /// <summary>
+        /// Runs the warehouse simulation.
+        /// </summary>
         public void Run()
         {
             // Prompt user for number of docks
@@ -145,7 +172,7 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
                 bool inputValid = false;
                 while (!inputValid)
                 {
-                    Console.Write("Enter number of trucks that can be processed at the entrance at the entrance at once (enter nothing to use default value 2):\n>");
+                    Console.Write("Enter number of trucks that can be processed at the entrance at once (enter nothing to use default value 2):\n>");
                     string numOfTrucksToProcessStr = Console.ReadLine();
 
                     if (string.IsNullOrEmpty(numOfTrucksToProcessStr))
@@ -412,6 +439,11 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             CurrentTime++;
         }
 
+        /// <summary>
+        /// Calculates the chance of a truck arriving at the given time.
+        /// </summary>
+        /// <param name="time">The simulation time to calculate the chance at.</param>
+        /// <returns>The chance of a truck arriving at the given time.</returns>
         private float ChanceFormula(int time)
         {
             if (time < 0 || time > TIME_INCREMENTS) return -1.0f;
@@ -430,6 +462,11 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             return chance;
         }
 
+        /// <summary>
+        /// Loads a random number of random crates into the given truck.
+        /// </summary>
+        /// <param name="truck">The truck to load the random crates into.</param>
+        /// <returns>The given truck.</returns>
         private Truck GiveRandomCrates(Truck truck)
         {
             Random randy = new Random();
@@ -444,6 +481,9 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             return truck;
         }
 
+        /// <summary>
+        /// Returns the dock with the shortest line.
+        /// </summary>
         private Dock GetDockWithShortestLine()
         {
             Dock dock = Docks[0];
@@ -461,6 +501,9 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             return dock;
         }
 
+        /// <summary>
+        /// Returns the dock with the longest line.
+        /// </summary>
         private Dock GetDockWithLongestLine()
         {
             Dock dock = Docks[0];
@@ -478,6 +521,10 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             return dock;
         }
 
+        /// <summary>
+        /// Returns the total value of the crates of the given truck.
+        /// </summary>
+        /// <param name="truck">The truck to get the total value of.</param>
         private double GetTruckValue(Truck truck)
         {
             double totalValue = 0.0f;
@@ -488,11 +535,22 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             return totalValue;
         }
 
+        /// <summary>
+        /// Records data about the given crate and information 
+        /// relevant to when it was unloaded.
+        /// </summary>
+        /// <param name="crate">The crate that was unloaded.</param>
+        /// <param name="truck">The truck that the crate came from.</param>
+        /// <param name="time">The simulation time at which the crate was unloaded</param>
+        /// <param name="scenario">The scenario that the crate was in when it was unloaded.</param>
         private void LogCrate(Crate crate, Truck truck, int time, string scenario)
         {
             CrateDataSB.Append($"{time},{truck.driver},{truck.deliveryCompany},{crate.ID},{crate.Price},{scenario}\n");
         }
 
+        /// <summary>
+        /// Exports the data from all crates to a file.
+        /// </summary>
         private void ExportLoggedCrates()
         {
             // Prompt user for file path
@@ -539,6 +597,9 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             Utils.WriteToFile(crateDataFilePath, fileContent.ToString());
         }
 
+        /// <summary>
+        /// Exports the simulation results to a file.
+        /// </summary>
         private void ExportResults()
         {
             // Prompt user for file path
