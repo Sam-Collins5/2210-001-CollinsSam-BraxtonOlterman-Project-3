@@ -248,10 +248,11 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
                 // Draw trucks waiting at the entrance
                 var entranceTrucks = Entrance.ToArray();
                 float truckX = 0.0f;
+                int numOfEntranceTrucksToDraw = entranceTrucks.Count() <= 22 ? entranceTrucks.Count() : 22;
                 for (int i = 0; i < entranceTrucks.Count(); i++)
                 {
                     Raylib.DrawTextureEx(truckTexture, new Vector2((1280.0f - 180.0f) - truckX, 720.0f - 100.0f), 90.0f, 1.0f, Color.WHITE);
-                    truckX += 20.0f;
+                    truckX += 50.0f;
                 }
 
                 // Draw docks
@@ -271,7 +272,7 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
                     float dockTruckPosY = 120 - (int)(dockRectSize.Y / 2);
                     float dockTruckYOffset = 0.0f;
                     // Draw trucks that are in line, but draw 9 at maximum
-                    int numOfTrucksToDraw = entranceTrucks.Count() <= 9 ? entranceTrucks.Count() : 9;
+                    int numOfTrucksToDraw = Docks[i].Line.Count() <= 9 ? Docks[i].Line.Count() : 9;
                     for (int t = 0; t < numOfTrucksToDraw; t++)
                     {
                         Raylib.DrawTextureEx(
