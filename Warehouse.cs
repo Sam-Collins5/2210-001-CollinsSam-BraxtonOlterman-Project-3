@@ -10,7 +10,6 @@ using Raylib_cs;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text;
-using System.Threading.Channels;
 
 namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
 {
@@ -24,13 +23,15 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
         private int CurrentDockID = 0;
         private int CurrentCrateID = 0;
 
-        private const int MAX_NEW_TRUCKS = 3;
-        private const int NUM_OF_TRUCKS_TO_PROCESS = 2;
+        private int MaxNewTrucks = 3;
+        private int NumOfTrucksToProcess = 2;
 
         private const int TIME_INCREMENTS = 48;
         private int CurrentTime = 0;
+        private int TickIntervalMS = 0;
 
         private StringBuilder SimulationDataSB;
+        private StringBuilder CrateDataSB;
         private int LongestDockLine = 0;
         private List<double> CratePrices;
         private List<double> TruckPrices;
@@ -43,17 +44,134 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             Entrance = new Queue<Truck>();
 
             SimulationDataSB = new StringBuilder();
+            CrateDataSB = new StringBuilder();
             CratePrices = new List<double>();
             TruckPrices = new List<double>();
         }
 
         public void Run()
         {
-            Console.Write("Enter number of docks (1-15):\n>");
-            string numberOfDocksStr = Console.ReadLine();
-            NumberOfDocks = int.Parse(numberOfDocksStr);
+            // Prompt user for number of docks
+            {
+                bool inputValid = false;
+                while (!inputValid)
+                {
+                    Console.Write("Enter number of docks (1-15):\n>");
+                    string numberOfDocksStr = Console.ReadLine();
 
-            SimulationDataSB.Append($"Number of Docks: {NumberOfDocks}");
+                    try
+                    {
+                        NumberOfDocks = int.Parse(numberOfDocksStr);
+                        if (NumberOfDocks > 0 && NumberOfDocks <= 15)
+                        {
+                            inputValid = true;
+                            break;
+                        }
+                        Console.Write("Invalid input, try again.\n\n");
+                    }
+                    catch
+                    {
+                        Console.Write("Invalid input, try again.\n\n");
+                    }
+                }
+            }
+
+            // Prompt user for simulation speed
+            {
+                bool inputValid = false;
+                while (!inputValid)
+                {
+                    Console.Write("Enter simulation step speed (ms) (enter nothing to use default value 2000):\n>");
+                    string tickIntervalStr = Console.ReadLine();
+
+                    if (string.IsNullOrEmpty(tickIntervalStr))
+                    {
+                        TickIntervalMS = 2000;
+                        inputValid = true;
+                        break;
+                    }
+
+                    try
+                    {
+                        TickIntervalMS = int.Parse(tickIntervalStr);
+                        if (TickIntervalMS > -1)
+                        {
+                            inputValid = true;
+                            break;
+                        }
+                        Console.Write("Invalid input, try again.\n\n");
+                    }
+                    catch
+                    {
+                        Console.Write("Invalid input, try again.\n\n");
+                    }
+                }
+            }
+
+            // Prompt user for the maximum amount of trucks that can arrive at once
+            {
+                bool inputValid = false;
+                while (!inputValid)
+                {
+                    Console.Write("Enter maximum number of trucks that can arrive at once (enter nothing to use default value 3):\n>");
+                    string maxNewTrucksStr = Console.ReadLine();
+
+                    if (string.IsNullOrEmpty(maxNewTrucksStr))
+                    {
+                        MaxNewTrucks = 3;
+                        inputValid = true;
+                        break;
+                    }
+
+                    try
+                    {
+                        MaxNewTrucks = int.Parse(maxNewTrucksStr);
+                        if (MaxNewTrucks > 0)
+                        {
+                            inputValid = true;
+                            break;
+                        }
+                        Console.Write("Invalid input, try again.\n\n");
+                    }
+                    catch
+                    {
+                        Console.Write("Invalid input, try again.\n\n");
+                    }
+                }
+            }
+
+            // Prompt user for number of trucks that can be processed at the entrance at once
+            {
+                bool inputValid = false;
+                while (!inputValid)
+                {
+                    Console.Write("Enter number of trucks that can be processed at the entrance at the entrance at once (enter nothing to use default value 2):\n>");
+                    string numOfTrucksToProcessStr = Console.ReadLine();
+
+                    if (string.IsNullOrEmpty(numOfTrucksToProcessStr))
+                    {
+                        NumOfTrucksToProcess = 2;
+                        inputValid = true;
+                        break;
+                    }
+
+                    try
+                    {
+                        NumOfTrucksToProcess = int.Parse(numOfTrucksToProcessStr);
+                        if (NumOfTrucksToProcess > 0)
+                        {
+                            inputValid = true;
+                            break;
+                        }
+                        Console.Write("Invalid input, try again.\n\n");
+                    }
+                    catch
+                    {
+                        Console.Write("Invalid input, try again.\n\n");
+                    }
+                }
+            }
+
             TimesThatDocksInUse = new int[NumberOfDocks];
             TimesThatDocksNotInUse = new int[NumberOfDocks];
 
@@ -64,7 +182,7 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
                 CurrentDockID++;
             }
 
-            // Raylib
+            // Disable raylib logger
             unsafe
             {
                 Raylib.SetTraceLogCallback(&Logger.LogCustom);
@@ -90,15 +208,25 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
                     }
                 }
 
-                if (tickSW.ElapsedMilliseconds >= 500 && trucksStillUnloading)
+                if (tickSW.ElapsedMilliseconds >= TickIntervalMS && trucksStillUnloading)
                 {
+                    Console.WriteLine($"{CurrentTime}----------------");
                     Step();
                     tickSW.Restart();
                 }
-                else if (tickSW.ElapsedMilliseconds >= 500 && CurrentTime < TIME_INCREMENTS)
+                else if (tickSW.ElapsedMilliseconds >= TickIntervalMS && CurrentTime < TIME_INCREMENTS)
                 {
+                    Console.WriteLine($"{CurrentTime}----------------");
                     Step();
                     tickSW.Restart();
+                }
+
+                // Export all simulation data when the simulation is finished
+                if (!trucksStillUnloading && CurrentTime > TIME_INCREMENTS)
+                {
+                    ExportResults();
+                    ExportLoggedCrates();
+                    return;
                 }
 
                 if (Raylib.IsKeyPressed(KeyboardKey.KEY_RIGHT))
@@ -110,40 +238,73 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
                 Raylib.BeginDrawing();
                 Raylib.ClearBackground(Color.GRAY);
 
+                // Draw current simulation time in the top right corner of the window
                 Raylib.DrawText($"Time: {CurrentTime}", 1280 - 140, 20, 32, Color.BLACK);
 
-                var entranceTrucks = Entrance.ToArray();
+                // Draw warehouse entrance
+                Raylib.DrawRectangle((1280 - 100) - (120/2), (720 - 80) - (120/2), 120, 120, Color.BLACK);
+                Raylib.DrawText("Entrance", 1280 - 150, 720 - 95, 22, Color.WHITE);
 
-                float truckX = 0;
+                // Draw trucks waiting at the entrance
+                var entranceTrucks = Entrance.ToArray();
+                float truckX = 0.0f;
                 for (int i = 0; i < entranceTrucks.Count(); i++)
                 {
-                    Raylib.DrawTextureEx(truckTexture, new Vector2((1280.0f - 80.0f)/2 - truckX, 720.0f - 100.0f), 90.0f, 1.0f, Color.WHITE);
+                    Raylib.DrawTextureEx(truckTexture, new Vector2((1280.0f - 180.0f) - truckX, 720.0f - 100.0f), 90.0f, 1.0f, Color.WHITE);
                     truckX += 20.0f;
                 }
 
+                // Draw docks
                 float dockX = 0;
                 for (int i = 0; i < NumberOfDocks; i++)
                 {
-                    string dockText = string.Empty;
-                    if (Docks[i].TotalSales > 1000)
-                        dockText = $"${Math.Round(Docks[i].TotalSales * 0.001f, 2)}k\n{Docks[i].Line.Count()}";
-                    else
-                        dockText = $"${Math.Round(Docks[i].TotalSales, 2)}\n{Docks[i].Line.Count()}";
-
-                    var dockTextSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), dockText, 16, 1.0f);
+                    // Draw dock rectangle
                     var dockRectSize = new Vector2(80.0f, 80.0f);
+                    int dockRectPosX = (int)(45 + dockX) - (int)(dockRectSize.X / 2);
+                    int dockRectPosY = 120 - (int)(dockRectSize.Y / 2);
 
                     Raylib.DrawRectangle(
-                        (int)(45 + dockX) - (int)(dockRectSize.X/2),
-                        150 - (int)(dockRectSize.Y/2),
+                        dockRectPosX, dockRectPosY,
                         (int)dockRectSize.X, (int)dockRectSize.Y, Color.BLUE);
+
+                    float dockTruckPosX = (45 + dockX) - (truckTexture.Width / 2);
+                    float dockTruckPosY = 120 - (int)(dockRectSize.Y / 2);
+                    float dockTruckYOffset = 0.0f;
+                    // Draw trucks that are in line, but draw 9 at maximum
+                    int numOfTrucksToDraw = entranceTrucks.Count() <= 9 ? entranceTrucks.Count() : 9;
+                    for (int t = 0; t < numOfTrucksToDraw; t++)
+                    {
+                        Raylib.DrawTextureEx(
+                            truckTexture,
+                            new Vector2(dockTruckPosX, dockTruckPosY + (85.0f + dockTruckYOffset)),
+                            0.0f, 1.0f, Color.WHITE);
+                        dockTruckYOffset += 50.0f;
+                    }
+
+                    // Draw dock revenue text
+                    string dockRevenueText = string.Empty;
+                    if (Docks[i].TotalSales > 1000)
+                        dockRevenueText = $"${Math.Round(Docks[i].TotalSales * 0.001f, 2)}k\n";
+                    else
+                        dockRevenueText = $"${Math.Round(Docks[i].TotalSales, 2)}\n";
+
+                    var dockRevenueTextSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), dockRevenueText, 16, 1.0f);
 
                     Color salesTextColor = Color.GREEN;
                     if (Docks[i].TotalSales < 0.0f) salesTextColor = Color.RED;
 
-                    Raylib.DrawTextPro(Raylib.GetFontDefault(), dockText,
-                        new Vector2((int)(35 + dockX) - (dockTextSize.X/2), 150 - (dockTextSize.Y / 2)),
+                    Raylib.DrawTextPro(Raylib.GetFontDefault(), dockRevenueText,
+                        new Vector2((int)(35 + dockX) - (dockRevenueTextSize.X/2), 120 - (dockRevenueTextSize.Y / 2)),
                         Vector2.Zero, 0.0f, 22.0f, 1.0f, salesTextColor);
+
+                    // Draw dock line text
+                    string dockLineText = $"\nLine: {Docks[i].Line.Count()}";
+
+                    var dockLineTextSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), dockLineText, 16, 1.0f);
+
+                    Raylib.DrawTextPro(Raylib.GetFontDefault(), dockLineText,
+                        new Vector2((int)(35 + dockX) - (dockLineTextSize.X / 2), 120 - (dockLineTextSize.Y / 2)),
+                        Vector2.Zero, 0.0f, 22.0f, 1.0f, Color.WHITE);
 
                     dockX += 85.0f;
                 }
@@ -156,18 +317,29 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             Raylib.CloseWindow();
         }
 
+        /// <summary>
+        /// Advances the warehouse simulatio by one "step".
+        /// </summary>
         private void Step()
         {
-            foreach (var dock in Docks)
+            for (int i = 0; i < Docks.Count(); i++)
             {
-                dock.TotalSales -= 100.0f;
+                Docks[i].TotalSales -= 100.0f;
+                if (Docks[i].Line.Count() > 0)
+                {
+                    TimesThatDocksInUse[i]++;
+                }
+                else
+                {
+                    TimesThatDocksNotInUse[i]++;
+                }
             }
 
             int longestLine = GetDockWithLongestLine().Line.Count();
             if (longestLine > LongestDockLine) LongestDockLine = longestLine;
 
             // Assign trucks at front of entrance line to a dock
-            for (int i = 0; i < NUM_OF_TRUCKS_TO_PROCESS; i++)
+            for (int i = 0; i < NumOfTrucksToProcess; i++)
             {
                 Dock dockToUse = GetDockWithShortestLine();
 
@@ -185,13 +357,14 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
                 // New trucks arrive
                 float chance = ChanceFormula(CurrentTime);
 
-                for (int i = 0; i < MAX_NEW_TRUCKS; i++)
+                for (int i = 0; i < MaxNewTrucks; i++)
                 {
                     double diceRoll = randy.NextDouble();
                     if (chance >= diceRoll)
                     {
                         Truck newTruck = new Truck();
                         GiveRandomCrates(newTruck);
+                        TruckPrices.Add(GetTruckValue(newTruck));
                         Console.WriteLine("New Truck:\n" + newTruck.ToString());
                         Entrance.Enqueue(newTruck);
                     }
@@ -209,6 +382,23 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
                         Crate crate = truck.Unload();
                         Docks[c].TotalCrates++;
                         Docks[c].TotalSales += crate.Price;
+                        CratePrices.Add(crate.Price);
+
+                        string scenario = string.Empty;
+                        if (truck.Trailer.Count() > 0)
+                        {
+                            scenario = "The crate was unloaded but the truck had more to unload.";
+                        }
+                        else if (truck.Trailer.Count() == 0 && Docks[c].Line.Count() > 0)
+                        {
+                            scenario = "The crate was unloaded and the truck had no more crates but there was another truck in line behind it.";
+                        }
+                        else if (truck.Trailer.Count() == 0 && Docks[c].Line.Count() == 0)
+                        {
+                            scenario = "The crate was unloaded and the truck had no more crates and there were no trucks in line behind it.";
+                        }
+
+                        LogCrate(crate, truck, CurrentTime, scenario);
                         Console.WriteLine($"Crate Unloaded: {crate.ID}, ${crate.Price}\n");
                     }
                     else
@@ -285,6 +475,136 @@ namespace _2210_001_CollinsSam_BraxtonOlterman_Project_3
             }
 
             return dock;
+        }
+
+        private double GetTruckValue(Truck truck)
+        {
+            double totalValue = 0.0f;
+            foreach (var crate in truck.Trailer)
+            {
+                totalValue += crate.Price;
+            }
+            return totalValue;
+        }
+
+        private void LogCrate(Crate crate, Truck truck, int time, string scenario)
+        {
+            CrateDataSB.Append($"{time},{truck.driver},{truck.deliveryCompany},{crate.ID},{crate.Price},{scenario}\n");
+        }
+
+        private void ExportLoggedCrates()
+        {
+            // Prompt user for file path
+            string crateDataFilePath = string.Empty;
+            {
+                Console.Write("Enter file path for crate data (enter nothing to use default):\n>");
+                crateDataFilePath = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(crateDataFilePath))
+                {
+                    crateDataFilePath = "CrateData.csv";
+                }
+            }
+
+            // CurrentCrateID is given to avoid the empty string that comes
+            // after the last crate string is split on its \n
+            string[] loggedCrates = CrateDataSB.ToString().Split('\n', CurrentCrateID);
+
+            string[] unloadedTimes = new string[loggedCrates.Length];
+            string[] drivers = new string[loggedCrates.Length];
+            string[] companies = new string[loggedCrates.Length];
+            string[] crateIDs = new string[loggedCrates.Length];
+            string[] values = new string[loggedCrates.Length];
+            string[] scenarios = new string[loggedCrates.Length];
+
+            for (int i = 0; i < loggedCrates.Length; i++)
+            {
+                string[] cratefields = loggedCrates[i].Split(',');
+                unloadedTimes[i] = cratefields[0];
+                drivers[i] = cratefields[1];
+                companies[i] = cratefields[2];
+                crateIDs[i] = cratefields[3];
+                values[i] = cratefields[4];
+                scenarios[i] = cratefields[5];
+            }
+
+            StringBuilder fileContent = new StringBuilder();
+            fileContent.Append("Time Unloaded,Driver,Company,ID,Value,Scenario\n");
+            for (int i = 0; i < loggedCrates.Length; i++)
+            {
+                fileContent.Append($"{unloadedTimes[i]},{drivers[i]},{companies[i]},{crateIDs[i]},${values[i]},{scenarios[i]}\n");
+            }
+
+            Utils.WriteToFile(crateDataFilePath, fileContent.ToString());
+        }
+
+        private void ExportResults()
+        {
+            // Prompt user for file path
+            string resultsFilePath = string.Empty;
+            {
+                Console.Write("Enter file path for simulation results (enter nothing to use default):\n>");
+                resultsFilePath = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(resultsFilePath))
+                {
+                    resultsFilePath = "Simulation Results.txt";
+                }
+            }
+
+            SimulationDataSB.Append($"Number of Docks: {NumberOfDocks}\n");
+            SimulationDataSB.Append($"Longest Line: {LongestDockLine}\n");
+
+            int totalTrucks = 0;
+            foreach (var dock in Docks)
+            {
+                totalTrucks += dock.TotalTrucks;
+            }
+
+            SimulationDataSB.Append($"Trucks Processed: {totalTrucks}\n");
+            SimulationDataSB.Append($"Crates Unloaded: {CurrentCrateID + 1}\n");
+
+            double totalCrateValue = 0.0f;
+            foreach (var price in CratePrices)
+            {
+                totalCrateValue += price;
+            }
+
+            SimulationDataSB.Append($"Total Crate Value: ${Math.Round(totalCrateValue, 2)}\n");
+            SimulationDataSB.Append($"Average Crate Value: ${Math.Round(totalCrateValue / CratePrices.Count, 2)}\n");
+
+            double totalTruckValue = 0.0f;
+            foreach (var price in TruckPrices)
+            {
+                totalTruckValue += price;
+            }
+
+            SimulationDataSB.Append($"Average Truck Value: ${Math.Round(totalTruckValue / TruckPrices.Count, 2)}\n");
+            SimulationDataSB.Append($"Times Docks Were in Use:\n");
+
+            for (int i = 0; i < NumberOfDocks; i++)
+            {
+                SimulationDataSB.Append($"  Dock {i + 1}: {TimesThatDocksInUse[i]}\n");
+            }
+
+            SimulationDataSB.Append($"Times Docks Were not in Use:\n");
+
+            for (int i = 0; i < NumberOfDocks; i++)
+            {
+                SimulationDataSB.Append($"  Dock {i + 1}: {TimesThatDocksNotInUse[i]}\n");
+            }
+
+            float totalTimeDocksInUse = 0.0f;
+            foreach (var time in TimesThatDocksInUse)
+            {
+                totalTimeDocksInUse += time;
+            }
+
+            SimulationDataSB.Append($"Average Time Docks were in Use: {Math.Round(totalTimeDocksInUse / TimesThatDocksInUse.Count(), 2)}\n");
+            SimulationDataSB.Append($"Total Dock Operation Cost: ${Math.Round((NumberOfDocks * 100.0f) * CurrentTime, 2)}\n");
+            SimulationDataSB.Append($"Total Warehouse Revenue: ${Math.Round(totalCrateValue - ((NumberOfDocks * 100.0f) * CurrentTime), 2)}");
+
+            Utils.WriteToFile(resultsFilePath, SimulationDataSB.ToString());
         }
     }
 }
